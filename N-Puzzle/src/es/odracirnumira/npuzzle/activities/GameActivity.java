@@ -849,10 +849,6 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			game.initialState = game.nPuzzle.toString();
 			game.puzzleImagePath = getPuzzleImage();
 
-			if (game.puzzleImagePath.equals("")) {
-				Log.e("NPuzzle", "ERRRORORRO");
-			}
-
 			try {
 				if (game.puzzleImagePath != null) {
 					game.puzzleImage = ImageUtilities.secureDecode(game.puzzleImagePath,
