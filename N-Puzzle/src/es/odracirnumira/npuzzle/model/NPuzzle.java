@@ -36,10 +36,10 @@ import es.odracirnumira.npuzzle.util.MathUtilities;
  * will occupy the position that the tile occupied (their positions are swapped). <b>The empty tile
  * is always the tile number N</b>.
  * <p>
- * A N puzzle is solved when, for each tile <i>i</i>, it is placed at position <i>i</i> (the empty
+ * An N puzzle is solved when, for each tile <i>i</i>, it is placed at position <i>i</i> (the empty
  * tile will therefore be at the bottom right corner of the board).
  * <p>
- * A N puzzle does not have to be solvable, but the idea is that there should be a sequence of moves
+ * An N puzzle does not have to be solvable, but the idea is that there should be a sequence of moves
  * that can take it to a solved state.
  * <p>
  * When creating instances of this class, keep in mind that you should not break the limits imposed
@@ -449,7 +449,7 @@ public class NPuzzle implements Parcelable {
 			throw new IllegalArgumentException("Invalid tile");
 		}
 
-		return this.moveDirectionByPosition(this.tilePositions.get(tile));
+		return this.moveDirectionFromPosition(this.tilePositions.get(tile));
 	}
 
 	/**
@@ -461,7 +461,7 @@ public class NPuzzle implements Parcelable {
 	 *            the position of the tile.
 	 * @return the direction the tile can be moved to, or null if it cannot be moved.
 	 */
-	public Direction moveDirectionByPosition(int tilePos) {
+	public Direction moveDirectionFromPosition(int tilePos) {
 		if (!checkTilePosition(tilePos)) {
 			throw new IllegalArgumentException("Invalid tile position");
 		}
