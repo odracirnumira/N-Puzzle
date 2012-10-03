@@ -25,6 +25,7 @@ import es.odracirnumira.npuzzle.util.ImageUtilities;
 import es.odracirnumira.npuzzle.util.UIUtilities;
 import es.odracirnumira.npuzzle.view.NPuzzleView;
 import es.odracirnumira.npuzzle.view.NPuzzleView.INPuzzleViewListener;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.ProgressDialog;
@@ -184,6 +185,7 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 	 * Handler used to dispatch messages. Among others, dispatches the messages that update the
 	 * elapsed time view.
 	 */
+	@SuppressLint("HandlerLeak")
 	private Handler handler = new Handler() {
 		public void dispatchMessage(Message msg) {
 			switch (msg.what) {
