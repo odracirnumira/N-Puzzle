@@ -1,0 +1,111 @@
+La vista se dibuja de manera única por el NPuzzleView, es decir, no se trata de un ViewGroup con subvistas.
+
+Esta vista está sincronizada con el modelo al que representa. El modelo es un NPuzzle, de modo que, si el modelo cambia,
+salta una animación que modifica la vista para mover la casilla que se haya movido en en NPuzzle. Mientras la vista está
+cambiando a raíz de un cambio en el modelo, el usuario no puede interaccionar con ésta. Así se evita implementar una
+lógica innecesaria y complicada.
+
+La animación del movimiento de la casilla es rápida, de unos 200/300ms, salvo que sea el usuario el que esté arrastrando
+la casilla con el dedo. Si mientras el usuario está moviendo con el dedo una casilla, el modelo cambia, el movimiento del
+usuario es cancelado, de modo que la casilla que estaba moviendo vuelve a su posición, y en su lugar se mueve la que ha
+cambido en el modelo (que podría ser o no la misma).
+
+Nada impide que el modelo cambie de manera continua, mucho más rápidamente de lo que la vista puede actualizarse y mover
+las casillas correspondientes. En caso de que en medio de una animación producida por el cambio del modelo, el modelo
+cambie de nuevo, esta animación es cancelada y se inicia la nueva. Para evitar que el modelo cambie a velocidades 
+vertiginosas, la clase NPuzzleView permite registrar un listener que recibirá una notificación cuando la animación 
+actualmente en curso finalice. Así, se sabrá que, si se cambia el modelo justo después de recibir la notificación, no 
+debería haber problemas de corte brusco de las animaciones.
+
+La clase NPuzzle provee diversos eventos para los que otros objetos pueden registrarse como listeners. En particular, 
+existe un evento para señalizar que una casilla ha sido movida.
+
+La clase NPuzzleView también provee varios eventos. Por ejemplo, el evento "casilla i ha sido movida" es utilizado cuando
+, desde la vista, se ha cambiado la posición de una casilla. Esto ocurre si el usuario hace click en una de las casillas,
+o si, arrastrándola, la suelta en la casilla vacía. En cualquier caso, se dispara el evento, que debería ser recogido
+por el controlador y modificar convenientemente el modelo.
+
+Lógica interna de NPuzzleView
+*****************************
+
+1) Cuando el puzzle cambia.
+
+Si el usuario está arrastrando una casilla distinta a la que el usuario ha cambiado en el modelo, ésta es devuelta a su posición inicial.
+
+Se cancela el proceso de arrastrado, de modo que, cuando el usuario suelte el dedo, no ocurra nada (ni tampoco si lo sigue
+movimiendo por la pantalla).
+
+Se desactiva la capacidad de que la vista reciba eventos táctiles del usuario.
+
+Se comienza la animación. Para ello, se activa un flag que indica que la animación está activa, y se envía una petición de
+draw(). Como sabemos cuánto debe durar la animación, podemos calcular, cada vez que draw() es llamado, qué porcentaje del
+recorrido lleva completado la casilla, y así dibujarla en la correspondiente posición.
+
+Tenemos varias variables:
+
+- El instante en que la animación debería acabar.
+- El instance en que la animación empezó.
+- El porcentaje inicial del recorrido de la casilla cuando la animación comenzó. Si la casilla cambiada en el modelo es igual a la que el
+usuario estuviera arrastrando en ese momento, su valor será igual al porcentaje total del camino completado por el usuario justo en el
+momento en el que dejó de arrastrar la casilla. Si no es igual a la casilla que estaba arrastrando el usuario, su valor será 0.
+- Qué casilla del puzle está siendo movida
+
+Como sabemos la casilla que está siendo movida y sabemos la posición de la casilla vacía, podemos obtener fácilmente la
+dirección de movimiento de la casilla, y por tanto podemos dibujar fácilmente la casilla que se está moviendo en su 
+posición correcta.
+
+El algoritmo sería el siguiente:
+
+float ip=...initial percentage...
+float percentage=(currentTime-startTime)/(endTime-startTime)
+Direction dir=...
+
+Point tilePosition=tilePositionToCanvasCoordinates(tilePos);
+
+if(dir==UP){
+	tilePos.y-=tileHeight*ip + (tileHeight - tileHeight*ip)*percentage;
+}
+if(dir==DOWN){
+	tilePos.y+=tileHeight*ip + (tileHeight - tileHeight*ip)*percentage;
+}
+if(dir==LEFT){
+	tilePos.x-=tileWidth*ip + (tileWidth - tileWidth*ip)*percentage;
+}
+if(dir==RIGHT){
+	tilePos.x+=tileWidth*ip + (tileWidth - tileWidth*ip)*percentage;
+}
+
+drawTileAtPos(tilePosition);
+
+Cuando acaba la animación, se reactiva la capacidad de percibir eventos táctiles.
+
+2) Cuando el usuario arrastra una pieza.
+
+Inicialmente, se detecta el hecho de que el usuario ha pulsando la pieza, y se marca un flag "casilla siendo arrastrada".
+Conforme el usuario arrastra el dedo, se actualiza un valor que indica el porcentaje del recorrido que ha recorrido el dedo,
+de modo que, en base a dicho valor, la casilla que está siendo arrastrada se dibuja en uno u otro sitio. Mientras la casilla
+está siendo arrastrada, ésta se dibuja en un color ligeramente oscuro, para indicar la pulsación del usuario. Cada vez que
+se detecta el evento de arrastrar, se envía una petición de draw().
+
+Para la casilla que está siendo arrastrada se dispone de un flag, que es un número entero que indica qué casilla está
+siendo arrastrada y qué porcentaje del recorrido hasta el extremo al que está siendo arrastrada lleva recorrido. Por
+ejemplo, 5 - 46 indica que es la casilla 5 (que ocupará una posición determinada dentro del tablero), lleva recorrido un 46%
+del recorrido que la separa de la casilla vacía. Cuando el modelo del puzle es actualizado, estos valores son invalidados, 
+para que así dejen de pintarse, ya que en ese momento debe comenzar la animación automática.
+
+3) Cuando el usuario, al arrastrar una pieza, la suelta.
+
+Si la pieza ha recorrido más de la mitad de su recorrido hasta la casilla vacía, el modelo se cambia. Si no, el modelo se 
+deja igual.
+
+En el caso de que el modelo NO se cambie, se iniciará una animación tipo 1) que llevará la casilla a su posición original.
+
+En el caso de que el modelo SÍ se cambie, será el cambio del modelo el que notifique a la vista, que en consecuencia
+inciará una animación desde el mismo punto donde el usuario dejó de arrastrar la casilla, para así moverla hasta su posición
+final. Será otra animación tipo 1).
+
+Para implementar todo esto, se tendrán varias variables:
+
+- Un flag que indica que la casilla i está siendo arrastrada. Su valor es -1 si ninguna casilla está siendo arrastrada.
+- Un flag que indica el porcentaje de recorrido recorrido. Este porcentaje se obtiene a través de los eventos táctiles,
+y va de 0 a 1.

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:shrinkColumns="0,1"
+        android:stretchColumns="0,1" >
+
+        <TableRow android:padding="3dp" >
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_span="2"
+                android:gravity="center"
+                android:text="@string/game_statistics" />
+        </TableRow>
+
+        <View
+            android:layout_height="2dip"
+            android:background="?android:attr/dividerHorizontal" />
+
+        <TableRow>
+
+            <TextView
+                android:padding="3dp"
+                android:text="@string/elapsed_time" />
+
+            <TextView
+                android:id="@+id/elapsedTimeTextView"
+                android:gravity="right"
+                android:padding="3dp" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:padding="3dp"
+                android:text="@string/number_of_moves" />
+
+            <TextView
+                android:id="@+id/numMovesTextView"
+                android:gravity="right"
+                android:padding="3dp" />
+        </TableRow>
+
+        <View
+            android:layout_height="2dip"
+            android:background="?android:attr/dividerHorizontal" />
+    </TableLayout>
+
+</ScrollView>

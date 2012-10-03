@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/menuItemBack"
+        android:icon="@drawable/ic_action_back_arrow"
+        android:showAsAction="ifRoom"
+        android:title="@string/folder_back"/>
+    <item
+        android:id="@+id/menuItemSelectAll"
+        android:title="@string/select_all"/>
+    <item
+        android:id="@+id/menuItemUnselectAllFromDirectory"
+        android:title="@string/unselect_all_from_directory"/>
+    <item
+        android:id="@+id/menuItemUnselectAll"
+        android:title="@string/unselect_all"/>
+    <item android:title="@string/go_to">
+        <menu>
+            <item
+                android:id="@+id/menuItemGoToRoot"
+                android:title="@string/file_system_root"/>
+            <item
+                android:id="@+id/menuItemGoToExternalDir"
+                android:title="@string/sd_card">
+            </item>
+        </menu>
+    </item>
+
+</menu>

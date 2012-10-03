@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Attributes for an NPuzzleView -->
+    <declare-styleable name="NPuzzleView">
+
+        <!--
+        The duration of the animation that moves a tile from its current place to the
+        empty tile position. This value is expressed in milliseconds, and must be >=0
+        -->
+        <attr name="tileAnimationDuration" format="integer" />
+
+        <!-- The initial image to display. It must be a drawable resource -->
+        <attr name="image" format="reference" />
+        
+        <!-- The clockwise rotation of the image, in degrees. Can be 0, 90, 180 and 270. Defaults to 0-->
+        <attr name="imageRotation" format="integer"/>
+    </declare-styleable>
+
+    <!-- Attributes for a CustomDifficultyView -->
+    <declare-styleable name="CustomDifficultyView">
+
+        <!-- The minimum difficulty level -->
+        <attr name="minDifficulty" format="integer" />
+        <!-- The maximum difficulty level. Must be greater or equal than the minimum difficulty level -->
+        <attr name="maxDifficulty" format="integer" />
+    </declare-styleable>
+
+</resources>

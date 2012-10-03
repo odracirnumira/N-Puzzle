@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Array that contains the possible puzzle images locations -->
+    <string-array name="imagesLocationOptions">
+        <item>No image</item>
+        <item>Gallery</item>
+        <item>Custom directory</item>
+    </string-array>
+
+    <!-- Array with the available difficulty levels -->
+    <string-array name="gameDifficulties">
+        <item>Easy (3x3)</item>
+        <item>Normal (4x4)</item>
+        <item>Hard (5x5)</item>
+        <item>Custom (NxN)</item>
+    </string-array>
+
+</resources>

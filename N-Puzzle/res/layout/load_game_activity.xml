@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <!--
+ 	The 200dp for columnWidth matches the size of the view returned by the LoadGameActivity$GameCursorAdapter. If
+ 	you change this value do not forget to update the value there.
+    -->
+
+    <GridView
+        android:id="@+id/loadGameGridView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:columnWidth="200dp"
+        android:gravity="center"
+        android:horizontalSpacing="10dp"
+        android:numColumns="auto_fit"
+        android:stretchMode="columnWidth"
+        android:verticalSpacing="10dp" >
+    </GridView>
+
+    <TextView
+        android:id="@+id/emptyView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gravity="center"
+        android:text="@string/no_games_available"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/loadingDataView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        layout="@layout/loading_screen_layout"
+        android:visibility="gone" />
+
+</FrameLayout>
