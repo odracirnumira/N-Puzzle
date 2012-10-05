@@ -13,7 +13,6 @@ import es.odracirnumira.npuzzle.util.MathUtilities;
 import es.odracirnumira.npuzzle.util.UIUtilities;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -24,10 +23,6 @@ import android.graphics.RectF;
 import android.graphics.Paint.Style;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.provider.MediaStore;
 import android.util.AttributeSet;
 import android.util.Pair;
 import android.view.GestureDetector;
@@ -60,23 +55,12 @@ import android.view.View;
  * The view can also be used to modify the underlying {@code NPuzzle}. When a tile is moved in the
  * view, the {@code NPuzzle} is modified so it reflects the change that has been made.
  * <p>
- * This class cannot be drawn if the {@code NPuzzle} has not been set. Thus, if no {@code NPuzzle}
- * has been set (call {@link #setNPuzzle(NPuzzle)}), an exception will be thrown when the view is
- * drawn.
+ * This class can be drawn even if no puzzle or image is set. However, in that case, an empty view
+ * will be displayed.
  * <p>
- * To set an image, use the family of {@code setImage()} methods. If this method is not called, a
- * default image is created, so it is not mandatory to call it. This default image consists of a
- * plain board with numbers on each tile.
- * <p>
- * However, it may be the case that the puzzle is too large that even the default image cannot be
- * created. In that case, a default dummy image will be created instead. In general, if this class
- * has a problem loading the image, a dummy image will be created instead.
- * <p>
- * If you are going to set a custom image, it is better to call <code>setImage()</code> first and
- * then {@link #setNPuzzle(NPuzzle)}. This is due to the fact that calling
- * {@link #setNPuzzle(NPuzzle)} when no image has been set via the <code>setImage()</code> family of
- * methods tries to create the default image. Thus, it is a waste of time to create the default
- * image if it is going to be replaced afterwards.
+ * To set an image, use the {@link #setImage(Bitmap)} method. You can use
+ * {@link #createDefaultImage(int)} to create a default image for the puzzle, which shows numbered
+ * tiles.
  * <p>
  * This is an styleable class. See the <i>NPuzzleView</i> styleable resource for more information.
  * 
@@ -95,7 +79,7 @@ public class NPuzzleView extends View implements ITileListener {
 	private List<INPuzzleViewListener> listeners;
 
 	/**
-	 * The gesture detector.
+	 * The gesture detector. Can only be used if there is a puzzle and an image set.
 	 */
 	private GestureDetector gestureDetector;
 
@@ -264,14 +248,23 @@ public class NPuzzleView extends View implements ITileListener {
 	 */
 	private boolean handleScroll;
 
+	// /**
+	// * Boolean flag that tells if the view has been assigned a final size. It is important to know
+	// * this because only after a size has been assigned to the view we can determine where the
+	// board
+	// * will be placed, it actual size, etc.
+	// * <p>
+	// * This flag is set in {@link #onSizeChanged(int, int, int, int)}.
+	// */
+	// private boolean measured;
+
 	/**
-	 * Boolean flag that tells if the view has been assigned a final size. It is important to know
-	 * this because only after a size has been assigned to the view we can determine where the board
-	 * will be placed, it actual size, etc.
+	 * Boolean flag that tells if the view has been assigned a final size and that size was computed
+	 * with an image set (that is, the computed size is based on the image's size).
 	 * <p>
-	 * This flag is set in {@link #onSizeChanged(int, int, int, int)}.
+	 * This flag is set on {@link #onMeasure(int, int)}.
 	 */
-	private boolean measured;
+	private boolean measuredWithImage;
 
 	/**
 	 * This flag is activated if we are using the default image.
@@ -420,15 +413,6 @@ public class NPuzzleView extends View implements ITileListener {
 			this.setImageRotation(a.getInteger(R.styleable.NPuzzleView_imageRotation,
 					DEFAULT_IMAGE_ROTATION));
 
-			if (!isInEditMode()) {
-				int imageID = a.getResourceId(R.styleable.NPuzzleView_image, -1);
-
-				if (imageID != -1) {
-					Bitmap image = ImageUtilities.secureDecode(imageID);
-					this.setImage(image);
-				}
-			}
-
 			a.recycle();
 		}
 
@@ -550,7 +534,12 @@ public class NPuzzleView extends View implements ITileListener {
 	}
 
 	public boolean onTouchEvent(MotionEvent event) {
-		if (!handleTouchEvents) {
+		/*
+		 * We do not process the event if we were explicitly told so (handleTouchEvents==false) or
+		 * if there is no image or puzzle set (in that case we cannot process the event because
+		 * there is no puzzle to interact with).
+		 */
+		if (!handleTouchEvents || this.image == null || this.puzzle == null) {
 			return false;
 		}
 
@@ -587,11 +576,17 @@ public class NPuzzleView extends View implements ITileListener {
 	}
 
 	protected void onDraw(Canvas canvas) {
+		/*
+		 * If either the puzzle or the image is not set, draw a blank view.
+		 */
 		if (this.puzzle == null || this.image == null) {
-			throw new IllegalStateException(
-					"Cannot render the puzzle without a puzzle and an image.");
+			canvas.drawARGB(0, 0, 0, 0);
+			return;
 		}
 
+		/*
+		 * Otherwise, draw the board.
+		 */
 		// Draw static tiles
 		for (int i = 0; i < this.puzzle.getNumTiles() - 1; i++) {
 			if (i != this.movingTile && i != this.draggingTile) {
@@ -640,9 +635,20 @@ public class NPuzzleView extends View implements ITileListener {
 	}
 
 	/**
-	 * Sets the rotation of the image being displayed by the puzzle. This method can be called
-	 * before and after the view has been displayed. If after, a layout pass will be requested,
-	 * since the view may change its size.
+	 * Returns the image being displayed by the puzzle, or null if not set. Note that this Bitmap
+	 * may not necessarily be that set in {@link #setImage(Bitmap)}, since it may have been
+	 * resampled.
+	 * 
+	 * @return the image being displayed by the puzzle, or null if not set.
+	 */
+	public Bitmap getImage() {
+		return this.image;
+	}
+
+	/**
+	 * Sets the rotation of the image being displayed by the puzzle. This method can be called even
+	 * if no image or puzzle is set. If the image is set, a layout pass will be requested, since the
+	 * view may change its size.
 	 * 
 	 * @param rotation
 	 *            the rotation of the image. Can be 0, 90, 180 and 270.
@@ -654,15 +660,29 @@ public class NPuzzleView extends View implements ITileListener {
 
 		this.imageRotation = rotation;
 
-		if (this.measured) {
+		if (this.image != null) {
 			/*
-			 * - Recompute tile positions and dimensions.
+			 * Request a layout and invalidation. Invalidation is required, since the dimensions of
+			 * the view may not change after the layout, in which case the view would not be
+			 * redrawn.
 			 * 
-			 * - Request a layout and invalidation. Invalidation is required, since the dimensions
-			 * of the view may not change after the layout, which is also why we recompute the board
-			 * position and tile dimensions here.
+			 * If after the rotation the image changes its size, the tile positions will be
+			 * recomputed automatically in onSizeChanged().
+			 * 
+			 * Note that here we call computeBoardPositionsAndTileDimensions() if possible. Why?
+			 * Because the view's size may not change even if the new image has a different size.
+			 * This may happen for instance if the view has fixed dimensions or if the new image has
+			 * the same size as the previous one. In that case, since the view's size will not
+			 * change after the layout pass, onSizeChanged() will not be called, so we need to
+			 * manually call computeBoardPositionsAndTileDimensions(). If the view's size finally
+			 * changes, computeBoardPositionsAndTileDimensions() will be called twice, one in
+			 * onSizeChanged() and another one here, but only the call in onSizeChanged() will
+			 * prevail and render the correct values.
 			 */
-			this.computeBoardPositionsAndTileDimensions();
+			if (this.measuredWithImage && this.puzzle != null) {
+				this.computeBoardPositionsAndTileDimensions();
+			}
+
 			this.requestLayout();
 			this.invalidate();
 		}
@@ -682,56 +702,36 @@ public class NPuzzleView extends View implements ITileListener {
 	}
 
 	/**
-	 * Sets the {@link NPuzzle} displayed by the {@code NPuzzleView}.
+	 * Sets the {@link NPuzzle} displayed by the {@code NPuzzleView}. Use null to set no puzzle, in
+	 * which case the view will display no puzzle.
 	 * <p>
 	 * This can be used to replace a previously set puzzle.
 	 * 
 	 * @param puzzle
-	 *            the puzzle that is displayed.
+	 *            the puzzle that is displayed. May be null.
 	 */
 	public void setNPuzzle(NPuzzle puzzle) {
-		if (puzzle == null) {
-			throw new IllegalArgumentException("null puzzle");
-		}
-
 		if (this.puzzle != null) {
 			this.puzzle.removeTileListener(this);
 		}
 
 		this.puzzle = puzzle;
 
-		/*
-		 * Normally, when we set a new puzzle, we do not have to change the image. However, if there
-		 * is no image set, we will create the default image so the view can be used even if no
-		 * image is set by the user explicitly.
-		 * 
-		 * Also, if there is an image set, and it is the default image, we have to recreate the
-		 * default image when changing the puzzle. Keep in mind that the default image depends on
-		 * the underlying puzzle, so if the puzzle changes, the image has to change too.
-		 * 
-		 * If the default image cannot be created, a dummy image is used instead.
-		 */
-		if (this.image == null || this.isDefaultImageBeingUsed) {
-			this.image = createDefaultImage(this.puzzle.getN());
-			this.isDefaultImageBeingUsed = true;
-
-			if (this.image == null) {
-				this.image = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-			}
+		if (this.puzzle != null) {
+			// Add this view as a listener of the puzzle
+			this.puzzle.addTileListener(this);
 		}
-
-		// Add this view as a listener of the puzzle
-		this.puzzle.addTileListener(this);
 
 		/*
 		 * If the view has already been measured it means that it is currently being displayed, so
 		 * since the puzzle has changed, we have to redraw it and recompute all the variables
 		 * associated with the board.
 		 */
-		if (this.measured) {
+		if (this.measuredWithImage && this.puzzle != null) {
 			this.computeBoardPositionsAndTileDimensions();
-			invalidate();
 		}
+
+		invalidate();
 	}
 
 	/**
@@ -773,181 +773,50 @@ public class NPuzzleView extends View implements ITileListener {
 
 	/**
 	 * Sets the image to display on the view. This can be used to replace whatever image was being
-	 * displayed. Can be null to display a default image, but the puzzle must be set if the default
-	 * image is to be used.
-	 * 
-	 * @param fileName
-	 *            the name of the file with the image to display. Can be null to display a default
-	 *            image.
-	 * @return true if the image was properly set, and false otherwise.
-	 */
-	public boolean setImage(String fileName) {
-		if (fileName == null) {
-			return this.setImage((Bitmap) null);
-		}
-
-		Bitmap image = ImageUtilities.secureDecode(fileName);
-
-		if (image == null) {
-			return false;
-		}
-
-		return this.setImage(image);
-	}
-
-	/**
-	 * Sets the image to display on the view. This can be used to replace whatever image was being
-	 * displayed. Can be null to display a default image, but the puzzle must be set if the default
-	 * image is to be used.
-	 * 
-	 * @param drawable
-	 *            the drawable to display. Can be null to display a default image.
-	 * @return true if the image was properly set, and false otherwise.
-	 */
-	public boolean setImage(Drawable drawable) {
-		if (drawable == null) {
-			return this.setImage((Bitmap) null);
-		}
-
-		Bitmap image = null;
-
-		if (drawable instanceof BitmapDrawable) {
-			image = ((BitmapDrawable) drawable).getBitmap();
-		} else {
-			Bitmap candidate = ImageUtilities.secureDrawableToBitmap(drawable);
-
-			if (candidate != null) {
-				image = candidate;
-			} else {
-				return false;
-			}
-		}
-
-		return this.setImage(image);
-	}
-
-	/**
-	 * Sets the image to display on the view. This can be used to replace whatever image was being
-	 * displayed.
-	 * 
-	 * @param resID
-	 *            the resource of the drawable to display.
-	 * @return true if the image was properly set, and false otherwise.
-	 */
-	public boolean setImage(int resID) {
-		Bitmap image = ImageUtilities.secureDecode(resID);
-
-		if (image == null) {
-			return false;
-		}
-
-		return this.setImage(image);
-	}
-
-	/**
-	 * Sets the image to display on the view. The image is represented by an {@link Uri} object that
-	 * points to the image. The {@code Uri} is turned into a file name via the
-	 * {@link MediaStore.Images} table.
-	 * 
-	 * @param uri
-	 *            the {@link Uri} that points to the image to display on the view.
-	 * @return true if the image was properly set, and false otherwise (for instance, if the image
-	 *         did not exist).
-	 */
-	public boolean setImage(Uri uri) {
-		String[] projection = { MediaStore.Images.ImageColumns.DATA };
-
-		Cursor c = NPuzzleApplication.getApplication().getContentResolver()
-				.query(uri, projection, null, null, null);
-
-		String fileName = null;
-
-		if (c != null && c.moveToFirst()) {
-			fileName = c.getString(0);
-		}
-
-		return this.setImage(fileName);
-	}
-
-	/**
-	 * Sets the image to display on the view. This can be used to replace whatever image was being
-	 * displayed. Can be null to display a default image, but the puzzle must be set if the default
-	 * image is to be used.
+	 * displayed. Can be null to display no image.
 	 * <p>
-	 * If a non-null image is passed, this method always succeeds (returns true).
-	 * <p>
-	 * It is recommended to use this method when setting the view's image, because for non-null
-	 * images it does not involve loading the image from the system. Methods such as
-	 * {@link #setImage(Drawable)}, {@link #setImage(int)} and {@link #setImage(String)} do have to
-	 * load the image from the input argument they are passed. This method, on the other hand,
-	 * directly uses the bitmap that is passed, so it does not have to do any processing, and as a
-	 * result it returns very quickly.
+	 * This method may resample the input Bitmap if it is too large. If the input bitmap is not to
+	 * be resampled by the view, be sure that its width and height are no larger than
+	 * {@value #IMAGE_MAX_WIDTH} and {@value #IMAGE_MAX_HEIGHT} respectively. Otherwise, the view
+	 * will resample the input Bitmap.
 	 * 
 	 * @param bitmap
-	 *            the bitmap to display. Can be null to display a default image.
-	 * @return true if the image was properly set, and false otherwise.
+	 *            the bitmap to display. Can be null to display no image.
 	 */
-	public boolean setImage(Bitmap bitmap) {
-		if (bitmap == null) {
-			/*
-			 * If the input bitmap is null and there is a puzzle set, create the default image.
-			 * Remember that the default image can only be created if the puzzle is set, which is
-			 * why we check that condition.
-			 * 
-			 * If no puzzle is set, do nothing. By doing this, we will wait for the puzzle to be set
-			 * before creating the image.
-			 */
-			if (this.puzzle != null) {
-				bitmap = createDefaultImage(this.puzzle.getN());
-
-				/*
-				 * If the default image could not be loaded, do nothing. Since the user has to set
-				 * the puzzle to start using the view, in setPuzzle() the dummy image will be
-				 * created if the default image cannot be created there either.
-				 */
-				if (bitmap == null) {
-					return false;
-				} else {
-					this.isDefaultImageBeingUsed = true;
-				}
-			} else {
-				return false;
-			}
-		} else {
-			this.isDefaultImageBeingUsed = false;
-		}
-
+	public void setImage(Bitmap bitmap) {
 		/*
-		 * Force the image to be smaller than the specific hardware limits.
+		 * Force the image to be smaller than the specific hardware limits (only if bitmap is not
+		 * null).
 		 */
-		if (bitmap.getWidth() > IMAGE_MAX_WIDTH || bitmap.getHeight() > IMAGE_MAX_HEIGHT) {
+		if (bitmap != null
+				&& (bitmap.getWidth() > IMAGE_MAX_WIDTH || bitmap.getHeight() > IMAGE_MAX_HEIGHT)) {
 			bitmap = ImageUtilities.resampleBitmap(bitmap, IMAGE_MAX_WIDTH, IMAGE_MAX_HEIGHT);
 		}
 
 		this.image = bitmap;
 
 		/*
-		 * If the view has already been measured and we set an image, it means that this method has
-		 * been called to change the image that was previously set. If the new image's size changes,
-		 * we should request a layout. In that case, the variables associated with the board will be
-		 * recomputed when onSizeChanged() is called again.
+		 * If the new image's size is different from the size of the previous image (or the previous
+		 * image was null), we should request a layout, because the view's size may change. In that
+		 * case, the variables associated with the board will be recomputed when onSizeChanged() is
+		 * called again.
 		 * 
-		 * Note that here we call computeBoardPositionsAndTileDimensions(). Why? Because the view's
-		 * size may not change even if the new image has a different size. This may happen for
-		 * instance if the view has fixed dimensions. In that case, since the view's size will not
-		 * change after the layout pass, onSizeChanged() will not be called, so we need to manually
-		 * call computeBoardPositionsAndTileDimensions(). If the view's size finally changes,
+		 * Note that here we call computeBoardPositionsAndTileDimensions() if possible. Why? Because
+		 * the view's size may not change even if the new image has a different size. This may
+		 * happen for instance if the view has fixed dimensions or if the new image has the same
+		 * size as the previous one. In that case, since the view's size will not change after the
+		 * layout pass, onSizeChanged() will not be called, so we need to manually call
+		 * computeBoardPositionsAndTileDimensions(). If the view's size finally changes,
 		 * computeBoardPositionsAndTileDimensions() will be called twice, one in onSizeChanged() and
 		 * another one here, but only the call in onSizeChanged() will prevail and render the
 		 * correct values.
 		 */
-		if (this.measured) {
+		if (this.measuredWithImage && this.puzzle != null && this.image != null) {
 			this.computeBoardPositionsAndTileDimensions();
-			requestLayout();
-			invalidate();
 		}
 
-		return true;
+		requestLayout();
+		invalidate();
 	}
 
 	/**
@@ -984,32 +853,41 @@ public class NPuzzleView extends View implements ITileListener {
 	 * @see android.view.View#onMeasure(int, int)
 	 */
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		if (this.image == null || this.puzzle == null) {
-			throw new IllegalStateException(
-					"Before drawing the view there must be a puzzle and an image set");
+		if (this.image == null) {
+			/*
+			 * If the image is not set, accept input dimensions.
+			 */
+			setMeasuredDimension(
+					Math.max(getSuggestedMinimumWidth(), MeasureSpec.getSize(widthMeasureSpec)),
+					Math.max(getSuggestedMinimumHeight(), MeasureSpec.getSize(heightMeasureSpec)));
+		} else {
+			/*
+			 * Otherwise, if the image has been set, we can compute the size of the view based on
+			 * the image's dimensions.
+			 * 
+			 * In case we are passed UNSPECIFIED, we will use the image dimensions (plus padding).
+			 * Note that we use the dimensions of the rotated image.
+			 */
+			int defaultWidth = getDefaultSize(this.getRotatedImageWidth() + getPaddingLeft()
+					+ getPaddingRight(), widthMeasureSpec);
+			int defaultHeight = getDefaultSize(this.getRotatedImageHeight() + getPaddingTop()
+					+ getPaddingBottom(), heightMeasureSpec);
+
+			/*
+			 * Once we have computed the default size of this view, we will try to reduce the
+			 * dimension (width or height) that does not fit the view, if possible. This means that
+			 * if the image dimension that does not fit the view is UNSPECIFIED or AT_MOST, it will
+			 * be reduced to the scaled image size plus padding.
+			 */
+			Pair<Integer, Integer> finalDimensions = this.reduceNotFittingDimensionIfPossible(
+					defaultWidth, MeasureSpec.getMode(widthMeasureSpec), defaultHeight,
+					MeasureSpec.getMode(heightMeasureSpec));
+
+			setMeasuredDimension(Math.max(getSuggestedMinimumWidth(), finalDimensions.first),
+					Math.max(getSuggestedMinimumHeight(), finalDimensions.second));
+
+			this.measuredWithImage = true;
 		}
-
-		/*
-		 * In case we are passed UNSPECIFIED, we will use the image dimensions (plus padding). Note
-		 * that we use the dimensions of the rotated image.
-		 */
-		int defaultWidth = getDefaultSize(this.getRotatedImageWidth() + getPaddingLeft()
-				+ getPaddingRight(), widthMeasureSpec);
-		int defaultHeight = getDefaultSize(this.getRotatedImageHeight() + getPaddingTop()
-				+ getPaddingBottom(), heightMeasureSpec);
-
-		/*
-		 * Once we have computed the default size of this view, we will try to reduce the dimension
-		 * (width or height) that does not fit the view, if possible. This means that if the image
-		 * dimension that does not fit the view is UNSPECIFIED or AT_MOST, it will be reduced to the
-		 * scaled image size plus padding.
-		 */
-		Pair<Integer, Integer> finalDimensions = this.reduceNotFittingDimensionIfPossible(
-				defaultWidth, MeasureSpec.getMode(widthMeasureSpec), defaultHeight,
-				MeasureSpec.getMode(heightMeasureSpec));
-
-		setMeasuredDimension(Math.max(getSuggestedMinimumWidth(), finalDimensions.first),
-				Math.max(getSuggestedMinimumHeight(), finalDimensions.second));
 	}
 
 	/*
@@ -1018,8 +896,9 @@ public class NPuzzleView extends View implements ITileListener {
 	 * @see android.view.View#onSizeChanged(int, int, int, int)
 	 */
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-		this.measured = true;
-		computeBoardPositionsAndTileDimensions();
+		if (this.measuredWithImage && this.puzzle != null) {
+			computeBoardPositionsAndTileDimensions();
+		}
 	}
 
 	/**
@@ -1128,13 +1007,13 @@ public class NPuzzleView extends View implements ITileListener {
 	 * {@link #fitWidth}, {@link #tileWidth}, {@link #tileHeight}, {@link #widthGap},
 	 * {@link #heightGap}, {@link #resizedImageWidth} and {@link #resizedImageHeight}.
 	 * <p>
-	 * This method can only be called if {@link #measured} is true. Otherwise, an exception is
-	 * thrown.
+	 * This method can only be called if {@link #measuredWithImage} is true and {@link #puzzle} is
+	 * not null. Otherwise, an exception is thrown.
 	 */
 	private void computeBoardPositionsAndTileDimensions() {
-		if (!this.measured) {
+		if (!this.measuredWithImage || this.puzzle == null) {
 			throw new IllegalStateException(
-					"This method can only be called once the view has been set a size");
+					"This method can only be called once the view has been set a size based on an image and there is a puzzle set");
 		}
 
 		// Width and height of the view once we remove padding

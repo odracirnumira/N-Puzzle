@@ -41,7 +41,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -667,6 +666,7 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			changeImageMenuItem.setVisible(false);
 			resignMenuItem.setVisible(false);
 			rotateImageMenuItem.setVisible(false);
+			randomImageFromSelectedLocationMenuItem.setVisible(false);
 		} else {
 			/*
 			 * Else, show the menu and change the visibility of its subitems depending on state of
@@ -700,7 +700,7 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			 * If the user has selected either the gallery or a custom directory for images, show
 			 * the option to get a new random image from the selected location. Otherwise, hide it.
 			 */
-			if (this.settings.getNPuzzleImagesLocation() != NPuzzleSettings.IMAGES_LOCATION_NO_IMAGE) {
+			if (!this.settings.getNPuzzleImagesLocation().equals(NPuzzleSettings.IMAGES_LOCATION_NO_IMAGE)) {
 				randomImageFromSelectedLocationMenuItem.setVisible(true);
 			} else {
 				randomImageFromSelectedLocationMenuItem.setVisible(false);
@@ -1047,7 +1047,7 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 					 * the puzzle's image could be loaded.
 					 */
 					if (result.puzzleImage != null) {
-						this.activity.nPuzzleView.setImage(result.puzzleImagePath);
+						this.activity.nPuzzleView.setImage(result.puzzleImage);
 						this.activity.showGameStartedScreen();
 					} else {
 						/*
@@ -1209,6 +1209,16 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 								cancel(false);
 							}
 						});
+			}
+
+			/*
+			 * Remove the current's puzzle image and destroy it.
+			 */
+			this.activity.nPuzzleView.setImage(null);
+
+			if (this.activity.game.puzzleImage != null) {
+				this.activity.game.puzzleImage.recycle();
+				this.activity.game.puzzleImage = null;
 			}
 		}
 
