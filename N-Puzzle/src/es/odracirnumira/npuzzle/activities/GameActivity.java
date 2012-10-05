@@ -675,17 +675,25 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			changeImageMenuItem.setVisible(true);
 
 			/*
-			 * If we are not displaying the default image, show option to display default image.
-			 * Otherwise, hide it.
-			 * 
-			 * If we are displaying the default image, we do not want the user to rotate the image.
+			 * If we could not load the image, do not show the "rotate option".
 			 */
-			if (this.game.puzzleImagePath == null) {
-				displayDefaultImageMenuItem.setVisible(false);
+			if (this.game.puzzleImage == null) {
 				rotateImageMenuItem.setVisible(false);
 			} else {
-				displayDefaultImageMenuItem.setVisible(true);
-				rotateImageMenuItem.setVisible(true);
+				/*
+				 * If we are not displaying the default image, show option to display default image.
+				 * Otherwise, hide it.
+				 * 
+				 * If we are displaying the default image, we do not want the user to rotate the
+				 * image.
+				 */
+				if (this.game.puzzleImagePath == null) {
+					displayDefaultImageMenuItem.setVisible(false);
+					rotateImageMenuItem.setVisible(false);
+				} else {
+					displayDefaultImageMenuItem.setVisible(true);
+					rotateImageMenuItem.setVisible(true);
+				}
 			}
 
 			/*
