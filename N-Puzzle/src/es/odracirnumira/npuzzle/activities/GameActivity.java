@@ -700,7 +700,8 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			 * If the user has selected either the gallery or a custom directory for images, show
 			 * the option to get a new random image from the selected location. Otherwise, hide it.
 			 */
-			if (!this.settings.getNPuzzleImagesLocation().equals(NPuzzleSettings.IMAGES_LOCATION_NO_IMAGE)) {
+			if (!this.settings.getNPuzzleImagesLocation().equals(
+					NPuzzleSettings.IMAGES_LOCATION_NO_IMAGE)) {
 				randomImageFromSelectedLocationMenuItem.setVisible(true);
 			} else {
 				randomImageFromSelectedLocationMenuItem.setVisible(false);
@@ -1069,14 +1070,6 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 				this.activity.loadGameTask = null;
 			}
 		}
-
-		protected void onCancelled(NPuzzleGame result) {
-			if (this.activity != null) {
-				// Nullify the task in the activity to signal the game is not being loaded
-				// anymore
-				this.activity.loadGameTask = null;
-			}
-		}
 	}
 
 	/**
@@ -1287,6 +1280,16 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 				// Nullify task on the activity to indicate that we are not loading the image
 				// anymore
 				this.activity.changePuzzleImageTask = null;
+			}
+		}
+
+		protected void onCancelled(Bitmap result) {
+			if (this.activity != null) {
+				// Nullify the task in the activity to signal we are not changing the image anymore
+				this.activity.changePuzzleImageTask = null;
+				
+				// Update options menu
+				this.activity.invalidateOptionsMenu();
 			}
 		}
 	}
