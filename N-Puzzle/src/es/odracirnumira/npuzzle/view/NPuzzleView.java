@@ -1080,7 +1080,7 @@ public class NPuzzleView extends View implements ITileListener {
 		int column = ((int) (x - this.widthGap)) / this.tileWidth;
 		int row = ((int) (y - this.heightGap)) / this.tileHeight;
 
-		return this.puzzle.getPositionTile(row * this.puzzle.getSideNumTiles() + column);
+		return this.puzzle.getTileAtPosition(row * this.puzzle.getSideNumTiles() + column);
 	}
 
 	/**

@@ -39,8 +39,8 @@ import es.odracirnumira.npuzzle.util.MathUtilities;
  * An N puzzle is solved when, for each tile <i>i</i>, it is placed at position <i>i</i> (the empty
  * tile will therefore be at the bottom right corner of the board).
  * <p>
- * An N puzzle does not have to be solvable, but the idea is that there should be a sequence of moves
- * that can take it to a solved state.
+ * An N puzzle does not have to be solvable, but the idea is that there should be a sequence of
+ * moves that can take it to a solved state.
  * <p>
  * When creating instances of this class, keep in mind that you should not break the limits imposed
  * by {@link #MIN_N}, {@link #MAX_N}, {@value #MIN_SIZE_SIZE} and {@link #MAX_SIDE_SIZE}. Otherwise,
@@ -316,7 +316,7 @@ public class NPuzzle implements Parcelable {
 	 *            the position whose tile will be retrieved.
 	 * @return the tile at <code>tilePos</code>.
 	 */
-	public int getPositionTile(int tilePos) {
+	public int getTileAtPosition(int tilePos) {
 		if (!checkTilePosition(tilePos)) {
 			throw new IllegalArgumentException("Invalid tile position: " + tilePos);
 		}
@@ -366,6 +366,38 @@ public class NPuzzle implements Parcelable {
 
 		for (int i = 0; i < this.numTiles; i++) {
 			result[i / this.sideNumTiles][i % sideNumTiles] = this.positionContents.get(i);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Returns an array that contains the positions of all the tiles. For each position <i>i</i> of
+	 * the returned array, the element at that position represents the position of tile <i>i</i>.
+	 * 
+	 * @return an array that contains the positions of all the tiles.
+	 */
+	public int[] getTilePositions() {
+		int[] result = new int[this.tilePositions.size()];
+
+		for (int i = 0; i < this.tilePositions.size(); i++) {
+			result[i] = this.tilePositions.get(i);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Returns an array that contains the puzzle tiles. For each position <i>i</i> of the returned
+	 * array, the element at that position represents the tile that is at position <i>i</i>.
+	 * 
+	 * @return an array that contains the puzzle tiles.
+	 */
+	public int[] getTiles() {
+		int[] result = new int[this.positionContents.size()];
+
+		for (int i = 0; i < this.positionContents.size(); i++) {
+			result[i] = this.positionContents.get(i);
 		}
 
 		return result;
@@ -905,7 +937,7 @@ public class NPuzzle implements Parcelable {
 	 * of its sides. For instance, if the puzzle is 4x4 (15 puzzle), then <code>sideSize</code> is
 	 * 4.
 	 * <p>
-	 * The returned puzzle can be solved. 
+	 * The returned puzzle can be solved.
 	 * 
 	 * @param sideSize
 	 *            the number of elements per side of the puzzle.

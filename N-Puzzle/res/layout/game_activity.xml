@@ -18,6 +18,12 @@
             android:layout_weight="1"
             app:tileAnimationDuration="100" />
 
+        <es.odracirnumira.npuzzle.view.PuzzleSolutionControlsView
+            android:id="@+id/puzzleSolutionControlsView"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
