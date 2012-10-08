@@ -1,36 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true" >
+        android:layout_gravity="center"
+        android:orientation="vertical" >
 
-        <Button
-            android:id="@+id/rewindButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Rewind" />
+        <SeekBar
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" />
 
-        <Button
-            android:id="@+id/playPauseButton"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Play/Pause" />
+            android:layout_height="wrap_content" android:layout_gravity="center_horizontal">
 
-        <Button
-            android:id="@+id/stopButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Stop" />
+            <ImageButton
+                android:id="@+id/decreaseSpeedButton"
+                style="@android:style/MediaButton.Rew"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingRight="5dp" />
 
-        <Button
-            android:id="@+id/fastForwardButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Fast Forward" />
+            <ImageButton
+                android:id="@+id/playPauseButton"
+                style="@android:style/MediaButton.Play"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingRight="5dp" />
+
+            <ImageButton
+                android:id="@+id/stopButton"
+                style="@android:style/MediaButton.Pause"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingRight="5dp" />
+
+            <ImageButton
+                android:id="@+id/increaseSpeedButton"
+                style="@android:style/MediaButton.Ffwd"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
     </LinearLayout>
 
-</RelativeLayout>
+</FrameLayout>

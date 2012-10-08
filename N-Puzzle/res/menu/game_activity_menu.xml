@@ -11,6 +11,9 @@
         android:showAsAction="never"
         android:title="@string/resign"
         />
+    <item android:id="@+id/menuItemSolvePuzzle"
+        android:showAsAction="never"
+        android:title="@string/solve"/>
     <item
         android:id="@+id/menuItemChangeImage"
         android:showAsAction="never"

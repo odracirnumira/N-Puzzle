@@ -10,8 +10,8 @@
         -->
         <attr name="tileAnimationDuration" format="integer" />
 
-        <!-- The clockwise rotation of the image, in degrees. Can be 0, 90, 180 and 270. Defaults to 0-->
-        <attr name="imageRotation" format="integer"/>
+        <!-- The clockwise rotation of the image, in degrees. Can be 0, 90, 180 and 270. Defaults to 0 -->
+        <attr name="imageRotation" format="integer" />
     </declare-styleable>
 
     <!-- Attributes for a CustomDifficultyView -->
@@ -21,6 +21,16 @@
         <attr name="minDifficulty" format="integer" />
         <!-- The maximum difficulty level. Must be greater or equal than the minimum difficulty level -->
         <attr name="maxDifficulty" format="integer" />
+    </declare-styleable>
+
+    <!-- Attributes for a PuzzleSolutionControlsView -->
+    <declare-styleable name="PuzzleSolutionControlsView">
+
+        <!--
+        The list of speed levels. This is a string containing integer values separated by the '|' character. There
+        can be negative values. Repetitions are ignored.
+        -->
+        <attr name="speedLevels" format="string" />
     </declare-styleable>
 
 </resources>

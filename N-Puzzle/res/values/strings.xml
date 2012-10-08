@@ -89,8 +89,9 @@
     <string name="random_image_from_selected_location">Random image from selected location</string>
     <string name="rotate">Rotate</string>
     <string name="resign">Resign</string>
+    <string name="solve">Solve</string>
     <string name="resign_game_question">Resign from game?</string>
-    <string name="resign_game_confirmation">Are you sure you want to resign from this game? The game will be deleted and unrecoverable</string>
+    <string name="resign_game_confirmation">Are you sure you want to resign from this game? The game will be deleted and unrecoverable.</string>
     <string name="puzzle_solved">Puzzle solved</string>
     <string name="number_of_moves">Number of moves</string>
     <string name="elapsed_time">Elapsed time</string>
@@ -98,5 +99,7 @@
     <string name="could_not_load_puzzle_image">Could not load the puzzle\'s image</string>
     <string name="loading_image">Loading image</string>
     <string name="game_statistics">Game statistics</string>
+    <string name="solve_game_question">Solve game?</string>
+    <string name="solve_game_confirmation">Do you want to solve this game? It may take a while.</string>
 
 </resources>

@@ -25,7 +25,8 @@ public interface IPuzzleSolver {
 	 * 
 	 * @param puzzle
 	 *            the puzzle to solve.
-	 * @return the list of moves to apply to solve the puzzle.
+	 * @return the list of moves to apply to solve the puzzle, or null if the algorithm could not
+	 *         complete for memory constraints reasons.
 	 * @throws RuntimeException
 	 *             if the input puzzle cannot be solved.
 	 * @throws IllegalStateException

@@ -9,8 +9,10 @@ import es.odracirnumira.npuzzle.contentproviders.NPuzzleContentProvider;
 import es.odracirnumira.npuzzle.contentproviders.NPuzzleContract;
 import es.odracirnumira.npuzzle.fragments.dialogs.GameFinishedDialogFragment;
 import es.odracirnumira.npuzzle.fragments.dialogs.ResignGameDialogFragmet;
+import es.odracirnumira.npuzzle.fragments.dialogs.SolvePuzzleDialogFragment;
 import es.odracirnumira.npuzzle.fragments.dialogs.GameFinishedDialogFragment.IGameFinishedListener;
 import es.odracirnumira.npuzzle.fragments.dialogs.ResignGameDialogFragmet.IResignGameListener;
+import es.odracirnumira.npuzzle.fragments.dialogs.SolvePuzzleDialogFragment.ISolvePuzzleListener;
 import es.odracirnumira.npuzzle.model.FinishedNPuzzleGame;
 import es.odracirnumira.npuzzle.model.NPuzzle;
 import es.odracirnumira.npuzzle.model.NPuzzleGame;
@@ -24,7 +26,9 @@ import es.odracirnumira.npuzzle.tasks.UpdateGameTask;
 import es.odracirnumira.npuzzle.util.ImageUtilities;
 import es.odracirnumira.npuzzle.util.UIUtilities;
 import es.odracirnumira.npuzzle.view.NPuzzleView;
+import es.odracirnumira.npuzzle.view.PuzzleSolutionControlsView;
 import es.odracirnumira.npuzzle.view.NPuzzleView.INPuzzleViewListener;
+import android.animation.LayoutTransition;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.FragmentManager;
@@ -44,13 +48,14 @@ import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 import android.widget.Toast;
 
 //TODO: comment this class
 public class GameActivity extends Activity implements ITileListener, IResignGameListener,
-		INPuzzleViewListener, IGameFinishedListener {
+		INPuzzleViewListener, IGameFinishedListener, ISolvePuzzleListener {
 	/**
 	 * Input extra that defines the size of the puzzle for this new game. If this extra is defined,
 	 * a new game is created, and its size will be determined by this integer value, which is the
@@ -88,7 +93,7 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 	/**
 	 * View that displays all the controls and stuff when a game is available.
 	 */
-	private View gameView;
+	private ViewGroup gameView;
 
 	/**
 	 * View that displays a progress bar indicating that the game is starting.
@@ -104,6 +109,11 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 	 * View used when we could not load the puzzle's image.
 	 */
 	private View couldNotLoadPuzzleImageView;
+
+	/**
+	 * View that controls solving the current puzzle.
+	 */
+	private PuzzleSolutionControlsView controlsView;
 
 	/**
 	 * The N puzzle game that is being managed. May be null while the game is being started or
@@ -228,13 +238,17 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 		this.resigned = false;
 
 		// Load views
-		this.gameView = findViewById(R.id.gameView);
+		this.gameView = (ViewGroup) findViewById(R.id.gameView);
 		this.couldNotLoadPuzzleImageView = findViewById(R.id.couldNotLoadPuzzleImageView);
 		this.couldNotLoadGameView = findViewById(R.id.couldNotLoadGameView);
 		this.loadingGameView = findViewById(R.id.loadingGameView);
 		this.nPuzzleView = (NPuzzleView) findViewById(R.id.nPuzzleView);
 		this.numMovesView = (TextView) findViewById(R.id.numMovesTextView);
 		this.elapsedTimeView = (TextView) findViewById(R.id.elapsedTimeTextView);
+		this.controlsView = (PuzzleSolutionControlsView) findViewById(R.id.puzzleSolutionControlsView);
+
+		// Set up animations in gameView
+		this.gameView.setLayoutTransition(new LayoutTransition());
 
 		// Register on the NPuzzleView to listen for animation events
 		this.nPuzzleView.addViewListener(this);
@@ -658,6 +672,7 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 				.findItem(R.id.menuItemRandomImageFromSelectedLocation);
 		MenuItem rotateImageMenuItem = menu.findItem(R.id.menuItemRotateImage);
 		MenuItem resignMenuItem = menu.findItem(R.id.menuItemResignGame);
+		MenuItem solveMenuItem = menu.findItem(R.id.menuItemSolvePuzzle);
 
 		/*
 		 * If there is no active game, hide the "change image" menu.
@@ -667,6 +682,7 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			resignMenuItem.setVisible(false);
 			rotateImageMenuItem.setVisible(false);
 			randomImageFromSelectedLocationMenuItem.setVisible(false);
+			solveMenuItem.setVisible(false);
 		} else {
 			/*
 			 * Else, show the menu and change the visibility of its subitems depending on state of
@@ -675,11 +691,15 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			changeImageMenuItem.setVisible(true);
 
 			/*
-			 * If we could not load the image, do not show the "rotate option".
+			 * If we could not load the image, do not show the "rotate" or the "solve puzzle"
+			 * option.
 			 */
 			if (this.game.puzzleImage == null) {
 				rotateImageMenuItem.setVisible(false);
+				solveMenuItem.setVisible(false);
 			} else {
+				solveMenuItem.setVisible(true);
+
 				/*
 				 * If we are not displaying the default image, show option to display default image.
 				 * Otherwise, hide it.
@@ -774,6 +794,13 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 				FragmentManager manager = getFragmentManager();
 				ResignGameDialogFragmet dialog = new ResignGameDialogFragmet();
 				dialog.show(manager, "resignGameDialog");
+				return true;
+			}
+
+			case R.id.menuItemSolvePuzzle: {
+				FragmentManager manager = getFragmentManager();
+				SolvePuzzleDialogFragment dialog = new SolvePuzzleDialogFragment();
+				dialog.show(manager, "solveGameDialog");
 				return true;
 			}
 		}
@@ -1287,7 +1314,7 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			if (this.activity != null) {
 				// Nullify the task in the activity to signal we are not changing the image anymore
 				this.activity.changePuzzleImageTask = null;
-				
+
 				// Update options menu
 				this.activity.invalidateOptionsMenu();
 			}
@@ -1468,6 +1495,17 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			 * Else, end the activity.
 			 */
 			finish();
+		}
+	}
+
+	/**
+	 * @see es.odracirnumira.npuzzle.fragments.dialogs.SolvePuzzleDialogFragment.ISolvePuzzleListener#solve(boolean)
+	 */
+	public void solve(boolean solve) {
+		if (this.controlsView.getVisibility() == View.VISIBLE) {
+			this.controlsView.setVisibility(View.GONE);
+		} else {
+			this.controlsView.setVisibility(View.VISIBLE);
 		}
 	}
 }
