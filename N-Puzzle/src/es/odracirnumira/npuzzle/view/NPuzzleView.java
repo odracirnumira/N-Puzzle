@@ -248,15 +248,14 @@ public class NPuzzleView extends View implements ITileListener {
 	 */
 	private boolean handleScroll;
 
-	// /**
-	// * Boolean flag that tells if the view has been assigned a final size. It is important to know
-	// * this because only after a size has been assigned to the view we can determine where the
-	// board
-	// * will be placed, it actual size, etc.
-	// * <p>
-	// * This flag is set in {@link #onSizeChanged(int, int, int, int)}.
-	// */
-	// private boolean measured;
+	/**
+	 * Boolean flag that tells if the view has been assigned a final size. It is important to know
+	 * this because only after a size has been assigned to the view we can determine where the board
+	 * will be placed, it actual size, etc.
+	 * <p>
+	 * This flag is set in {@link #onMeasure(int, int)}.
+	 */
+	private boolean measured;
 
 	/**
 	 * Boolean flag that tells if the view has been assigned a final size and that size was computed
@@ -679,13 +678,15 @@ public class NPuzzleView extends View implements ITileListener {
 			 * onSizeChanged() and another one here, but only the call in onSizeChanged() will
 			 * prevail and render the correct values.
 			 */
-			if (this.measuredWithImage && this.puzzle != null) {
+			if (this.measured && this.puzzle != null) {
 				this.computeBoardPositionsAndTileDimensions();
 			}
 
 			this.requestLayout();
 			this.invalidate();
 		}
+
+		this.measured = true;
 	}
 
 	/**
@@ -811,7 +812,7 @@ public class NPuzzleView extends View implements ITileListener {
 		 * another one here, but only the call in onSizeChanged() will prevail and render the
 		 * correct values.
 		 */
-		if (this.measuredWithImage && this.puzzle != null && this.image != null) {
+		if (this.measured && this.puzzle != null && this.image != null) {
 			this.computeBoardPositionsAndTileDimensions();
 		}
 
@@ -888,6 +889,8 @@ public class NPuzzleView extends View implements ITileListener {
 
 			this.measuredWithImage = true;
 		}
+
+		this.measured = true;
 	}
 
 	/*
@@ -1007,13 +1010,13 @@ public class NPuzzleView extends View implements ITileListener {
 	 * {@link #fitWidth}, {@link #tileWidth}, {@link #tileHeight}, {@link #widthGap},
 	 * {@link #heightGap}, {@link #resizedImageWidth} and {@link #resizedImageHeight}.
 	 * <p>
-	 * This method can only be called if {@link #measuredWithImage} is true and {@link #puzzle} is
-	 * not null. Otherwise, an exception is thrown.
+	 * This method can only be called if {@link #measured} is true and {@link #puzzle} is not null.
+	 * Otherwise, an exception is thrown.
 	 */
 	private void computeBoardPositionsAndTileDimensions() {
-		if (!this.measuredWithImage || this.puzzle == null) {
+		if (!this.measured || this.puzzle == null || this.image == null) {
 			throw new IllegalStateException(
-					"This method can only be called once the view has been set a size based on an image and there is a puzzle set");
+					"This method can only be called once the view has been set a size and there are an image and a puzzle set");
 		}
 
 		// Width and height of the view once we remove padding

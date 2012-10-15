@@ -61,11 +61,4 @@
         android:gravity="center"
         android:text="@string/could_not_load_game" />
 
-    <TextView
-        android:id="@+id/couldNotLoadPuzzleImageView"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:gravity="center"
-        android:text="@string/could_not_load_puzzle_image" />
-
 </FrameLayout>

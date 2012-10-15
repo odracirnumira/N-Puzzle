@@ -79,7 +79,7 @@ public class NewCustomGameDialogFragment extends DialogFragment {
 		this.difficultyView = new CustomDifficultyView(getActivity());
 
 		// TODO: make the max difficulty value configurable
-		this.difficultyView.setDifficultyRange(2, 30);
+		this.difficultyView.setDifficultyRange(2, 60);
 
 		if (savedInstanceState != null) {
 			this.difficultyView.setSelectedDifficulty(savedInstanceState

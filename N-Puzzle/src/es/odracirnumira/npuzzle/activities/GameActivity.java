@@ -106,11 +106,6 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 	private View couldNotLoadGameView;
 
 	/**
-	 * View used when we could not load the puzzle's image.
-	 */
-	private View couldNotLoadPuzzleImageView;
-
-	/**
 	 * View that controls solving the current puzzle.
 	 */
 	private PuzzleSolutionControlsView controlsView;
@@ -239,7 +234,6 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 
 		// Load views
 		this.gameView = (ViewGroup) findViewById(R.id.gameView);
-		this.couldNotLoadPuzzleImageView = findViewById(R.id.couldNotLoadPuzzleImageView);
 		this.couldNotLoadGameView = findViewById(R.id.couldNotLoadGameView);
 		this.loadingGameView = findViewById(R.id.loadingGameView);
 		this.nPuzzleView = (NPuzzleView) findViewById(R.id.nPuzzleView);
@@ -255,7 +249,6 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 
 		// Make all the views initially invisible.
 		this.gameView.setVisibility(View.GONE);
-		this.couldNotLoadPuzzleImageView.setVisibility(View.GONE);
 		this.couldNotLoadGameView.setVisibility(View.GONE);
 		this.loadingGameView.setVisibility(View.GONE);
 
@@ -535,7 +528,6 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			this.couldNotLoadGameView.setVisibility(View.GONE);
 			this.gameView.setVisibility(View.GONE);
 			this.loadingGameView.setVisibility(View.VISIBLE);
-			this.couldNotLoadPuzzleImageView.setVisibility(View.GONE);
 		}
 	}
 
@@ -554,11 +546,8 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			this.loadingGameView.startAnimation(AnimationUtils.loadAnimation(this,
 					android.R.anim.fade_out));
 			this.couldNotLoadGameView.setVisibility(View.GONE);
-			this.couldNotLoadPuzzleImageView.startAnimation(AnimationUtils.loadAnimation(this,
-					android.R.anim.fade_out));
 			this.gameView.setVisibility(View.VISIBLE);
 			this.loadingGameView.setVisibility(View.GONE);
-			this.couldNotLoadPuzzleImageView.setVisibility(View.GONE);
 
 			/*
 			 * Show the number of moves and elapsed time when the game is displayed to the user.
@@ -589,41 +578,13 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 					.loadAnimation(this, android.R.anim.fade_out));
 			this.loadingGameView.startAnimation(AnimationUtils.loadAnimation(this,
 					android.R.anim.fade_out));
-			this.couldNotLoadPuzzleImageView.startAnimation(AnimationUtils.loadAnimation(this,
-					android.R.anim.fade_out));
 			this.couldNotLoadGameView.setVisibility(View.VISIBLE);
 			this.gameView.setVisibility(View.GONE);
 			this.loadingGameView.setVisibility(View.GONE);
 			this.couldNotLoadGameView.setVisibility(View.GONE);
-			this.couldNotLoadPuzzleImageView.setVisibility(View.GONE);
 		}
 	}
 
-	/**
-	 * Shows the view that displays a message that tells that the puzzle's image could not be
-	 * loaded. If the view is already visible, does nothing.
-	 */
-	private void showCouldNotLoadPuzzleImageScreen() {
-		if (this.couldNotLoadPuzzleImageView.getVisibility() != View.VISIBLE) {
-			this.couldNotLoadGameView.startAnimation(AnimationUtils.loadAnimation(this,
-					android.R.anim.fade_out));
-			this.gameView.startAnimation(AnimationUtils
-					.loadAnimation(this, android.R.anim.fade_out));
-			this.loadingGameView.startAnimation(AnimationUtils.loadAnimation(this,
-					android.R.anim.fade_out));
-			this.couldNotLoadPuzzleImageView.startAnimation(AnimationUtils.loadAnimation(this,
-					android.R.anim.fade_in));
-			this.couldNotLoadGameView.setVisibility(View.GONE);
-			this.gameView.setVisibility(View.GONE);
-			this.loadingGameView.setVisibility(View.GONE);
-			this.couldNotLoadPuzzleImageView.setVisibility(View.VISIBLE);
-
-			/*
-			 * Update the action bar menu.
-			 */
-			this.invalidateOptionsMenu();
-		}
-	}
 
 	/*
 	 * Returns a "StartNewGameTask" if present, or a "LoadGameTask" if present.
@@ -732,6 +693,7 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			 */
 			if (this.finished) {
 				resignMenuItem.setVisible(false);
+				solveMenuItem.setVisible(false);
 			}
 		}
 
@@ -927,19 +889,19 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 
 				this.activity.nPuzzleView.setNPuzzle(result.nPuzzle);
 
-				if (result.puzzleImage != null) {
-					/*
-					 * Set up the NPuzzleView's image and show the view that displays the game if
-					 * the puzzle's image could be loaded.
-					 */
-					this.activity.nPuzzleView.setImage(result.puzzleImage);
-					this.activity.showGameStartedScreen();
-				} else {
-					/*
-					 * If we could not load the puzzle's image, show the
-					 * "could not load puzzle image" view.
-					 */
-					this.activity.showCouldNotLoadPuzzleImageScreen();
+				/*
+				 * Set up the NPuzzleView's image and show the view that displays the game if the
+				 * puzzle's image could be loaded.
+				 */
+				this.activity.nPuzzleView.setImage(result.puzzleImage);
+				this.activity.showGameStartedScreen();
+
+				/*
+				 * If the image could not be loaded, show error message.
+				 */
+				if (result.puzzleImage == null) {
+					Toast.makeText(activity, R.string.could_not_load_image, Toast.LENGTH_SHORT)
+							.show();
 				}
 
 				// Nullify the task in the activity to signal the game is not being loaded anymore
@@ -1074,15 +1036,15 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 					 * Set up the NPuzzleView's image and show the view that displays the game if
 					 * the puzzle's image could be loaded.
 					 */
-					if (result.puzzleImage != null) {
-						this.activity.nPuzzleView.setImage(result.puzzleImage);
-						this.activity.showGameStartedScreen();
-					} else {
-						/*
-						 * If we could not load the puzzle's image, show the
-						 * "could not load puzzle image" view.
-						 */
-						this.activity.showCouldNotLoadPuzzleImageScreen();
+					this.activity.nPuzzleView.setImage(result.puzzleImage);
+					this.activity.showGameStartedScreen();
+
+					/*
+					 * If the image could not be loaded, show error message.
+					 */
+					if (result.puzzleImage == null) {
+						Toast.makeText(activity, R.string.could_not_load_image, Toast.LENGTH_SHORT)
+								.show();
 					}
 				} else {
 					/*
@@ -1469,6 +1431,13 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 			finishedGame.startTime = this.game.startTime;
 
 			new SaveFinishedGameTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, finishedGame);
+
+			/*
+			 * Disable touch events for the view.
+			 */
+			this.nPuzzleView.enableTouchEvents(false);
+
+			this.invalidateOptionsMenu();
 		}
 	}
 
@@ -1484,15 +1453,9 @@ public class GameActivity extends Activity implements ITileListener, IResignGame
 	 * @see es.odracirnumira.npuzzle.fragments.dialogs.GameFinishedDialogFragment.IGameFinishedListener#stayInGame(boolean)
 	 */
 	public void stayInGame(boolean stayInGame) {
-		if (stayInGame) {
+		if (!stayInGame) {
 			/*
-			 * If we decide to stay in the current game, we disable the view.
-			 */
-			this.nPuzzleView.enableTouchEvents(false);
-			this.invalidateOptionsMenu();
-		} else {
-			/*
-			 * Else, end the activity.
+			 * End the activity if the user does not want to stay in the activity.
 			 */
 			finish();
 		}
