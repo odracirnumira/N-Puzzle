@@ -83,14 +83,15 @@ public abstract class AbstractNPuzzleGame implements Parcelable {
 	 */
 	protected AbstractNPuzzleGame(Parcel in) {
 		this.gameID = in.readLong();
-		this.nPuzzle = in.readParcelable(null);//NPuzzle.class.getClassLoader());
+		this.nPuzzle = in.readParcelable(NPuzzle.class.getClassLoader());
 		this.moves = new ArrayList<Integer>();
-		in.readList(this.moves,null);// AbstractNPuzzleGame.class.getClassLoader());
+		in.readList(this.moves, null);// AbstractNPuzzleGame.class.getClassLoader());
 		this.puzzleImagePath = in.readString();
 		this.puzzleImage = in.readParcelable(null);
 		this.elapsedTime = in.readLong();
 		this.startTime = in.readLong();
 		this.imageRotation = in.readInt();
+		this.initialState = in.readString();
 	}
 
 	public int describeContents() {
@@ -106,5 +107,6 @@ public abstract class AbstractNPuzzleGame implements Parcelable {
 		dest.writeLong(this.elapsedTime);
 		dest.writeLong(this.startTime);
 		dest.writeInt(this.imageRotation);
+		dest.writeString(this.initialState);
 	}
 }
