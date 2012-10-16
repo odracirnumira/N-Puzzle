@@ -1,5 +1,5 @@
 #include "NPuzzle.h"
 
-NPuzzle::NPuzzle(){
-	int a=0;
+namespace npuzzle {
+
 }
